@@ -27,4 +27,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function() {
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::post('/files', [FileController::class, 'loadFiles']);
+    Route::patch('/files/{file_id}', [FileController::class, 'editFile']);
 });

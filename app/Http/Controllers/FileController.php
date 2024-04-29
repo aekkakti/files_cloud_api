@@ -57,7 +57,6 @@ class FileController extends Controller
         return response()->json($arrayFiles, 200);
     }
 
-
     private function generateUniqueFileName($fileName) {
         $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
         $extension = pathinfo($fileName, PATHINFO_EXTENSION);
@@ -69,5 +68,31 @@ class FileController extends Controller
         }
 
         return $fileName;
+    }
+
+    public function editFile(Request $request, $file_id) {
+        $file = File::where('file_id', $file_id)->first();
+
+        if (!$file) {
+            return response()->json(['message' => 'Not found', 'code' => 404], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|unique:files,name,' . $file_id
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->all()], 422);
+        }
+        else {
+            $extension = pathinfo($file->name, PATHINFO_EXTENSION);
+
+            $newName = $request->name . '.' . $extension;
+
+            $file->update([
+                'name' => $newName
+            ]);
+            return response()->json(['success' => true, 'code' => 200, 'message' => 'Renamed'], 200);
+        }
     }
 }
