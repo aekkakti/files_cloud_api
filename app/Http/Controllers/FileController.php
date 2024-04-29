@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\Access;
 use App\Models\File;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -46,6 +48,11 @@ class FileController extends Controller
 
                 $file->storeAs('uploads', $fileName);
 
+                Access::create([
+                    'user_id' => $request->user()->id,
+                    'file_id' => $newFile->id,
+                ]);
+
                 $arrayFiles[] = [
                     'success' => true,
                     'code' => 200,
@@ -72,12 +79,18 @@ class FileController extends Controller
 
         return $fileName;
     }
+    
 
     public function editFile(Request $request, $file_id) {
         $file = File::where('file_id', $file_id)->first();
 
         if (!$file) {
             return response()->json(['message' => 'Not found', 'code' => 404], 404);
+        }
+
+        $user = Auth::user();
+        if (!$user->accesses()->where('file_id', $file_id)->exists()) {
+            return response()->json(['message' => 'Forbidden for you'], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -100,6 +113,11 @@ class FileController extends Controller
     }
 
     public function deleteFile($file_id) {
+        $user = Auth::user();
+        if (!$user->accesses()->where('file_id', $file_id)->exists()) {
+            return response()->json(['message' => 'Forbidden for you'], 403);
+        }
+
         $file = File::where('file_id', $file_id)->first();
 
         if (!$file) {
@@ -112,6 +130,12 @@ class FileController extends Controller
     }
 
     public function downloadFile($file_id) {
+
+        $user = Auth::user();
+        if (!$user->accesses()->where('file_id', $file_id)->exists()) {
+            return response()->json(['message' => 'Forbidden for you'], 403);
+        }
+
         $file = File::where('file_id', $file_id)->first();
 
         if (!$file) {
