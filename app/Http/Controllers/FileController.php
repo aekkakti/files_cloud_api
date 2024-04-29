@@ -7,6 +7,7 @@ use App\Models\File;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Validator;
@@ -42,6 +43,8 @@ class FileController extends Controller
                     'url' => "http://127.0.0.1:8000/api-file/files/{$file_id}",
                     'file_id' => $file_id
                 ]);
+
+                $file->storeAs('uploads', $fileName);
 
                 $arrayFiles[] = [
                     'success' => true,
@@ -103,8 +106,25 @@ class FileController extends Controller
             return response()->json(['message' => 'Not found', 'code' => 404], 404);
         }
 
-        $file->delete($file_id);
+        Storage::delete("uploads/{$file->name}");
+        $file->delete();
         return response()->json(['success' => true, 'code' => 200, 'message' => 'File deleted'], 200);
+    }
+
+    public function downloadFile($file_id) {
+        $file = File::where('file_id', $file_id)->first();
+
+        if (!$file) {
+            return response()->json(['success' => false, 'message' => 'File not found'], 404);
+        }
+
+        $filePath = storage_path("app/uploads/{$file->name}");
+
+        if (!file_exists($filePath)) {
+            return response()->json(['success' => false, 'message' => 'File not found'], 404);
+        }
+
+        return response()->file($filePath);
     }
 
 }

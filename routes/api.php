@@ -29,4 +29,5 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::post('/files', [FileController::class, 'loadFiles']);
     Route::patch('/files/{file_id}', [FileController::class, 'editFile']);
     Route::delete('/files/{file_id}', [FileController::class, 'deleteFile']);
+    Route::get('/files/{file_id}', [FileController::class, 'downloadFile']);
 });
