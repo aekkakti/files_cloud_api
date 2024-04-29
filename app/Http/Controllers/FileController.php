@@ -24,8 +24,8 @@ class FileController extends Controller
                 $fileName = $this->generateUniqueFileName($fileName);
             }
 
-            $validator = Validator::make($request->all(), [
-                'files.*' => 'mimes:doc,pdf,docx,zip,jpeg,jpg,png|max:2048'
+            $validator = Validator::make(['file' => $file], [
+                'file' => 'mimes:doc,pdf,docx,zip,jpeg,jpg,png|max:2048'
             ]);
 
             if ($validator->fails()) {
@@ -35,27 +35,28 @@ class FileController extends Controller
                     'name' => $fileName,
                 ];
             }
+            else {
+                $file_id = Str::random(10);
+                $newFile = File::create([
+                    'name' => $fileName,
+                    'url' => "http://127.0.0.1:8000/api-file/files/{$file_id}",
+                    'file_id' => $file_id
+                ]);
 
-            $file_id = Str::random(10);
-            $newFile = File::create([
-                'name' => $fileName,
-                'url' => "http://127.0.0.1:8000/api-file/files/{$file_id}",
-                'file_id' => $file_id
-            ]);
-
-
-            $arrayFiles[] = [
-                'success' => true,
-                'code' => 200,
-                'message' => 'Success',
-                'name' => $newFile->name,
-                'url' => $newFile->url,
-                'file_id' => $newFile->file_id
-            ];
+                $arrayFiles[] = [
+                    'success' => true,
+                    'code' => 200,
+                    'message' => 'Success',
+                    'name' => $newFile->name,
+                    'url' => $newFile->url,
+                    'file_id' => $newFile->file_id
+                ];
+            }
         }
 
         return response()->json($arrayFiles, 200);
     }
+
 
     private function generateUniqueFileName($fileName) {
         $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
