@@ -95,4 +95,16 @@ class FileController extends Controller
             return response()->json(['success' => true, 'code' => 200, 'message' => 'Renamed'], 200);
         }
     }
+
+    public function deleteFile($file_id) {
+        $file = File::where('file_id', $file_id)->first();
+
+        if (!$file) {
+            return response()->json(['message' => 'Not found', 'code' => 404], 404);
+        }
+
+        $file->delete($file_id);
+        return response()->json(['success' => true, 'code' => 200, 'message' => 'File deleted'], 200);
+    }
+
 }
