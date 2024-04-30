@@ -47,10 +47,15 @@ class FileController extends Controller
                 ]);
 
                 $file->storeAs('uploads', $fileName);
+                $fullName = $request->user()->first_name . ' ' . $request->user()->last_name;
 
                 Access::create([
                     'user_id' => $request->user()->id,
-                    'file_id' => $newFile->id,
+                    'file_name' => $fileName,
+                    'full_name' => $fullName,
+                    'type' => 'author',
+                    'email' => $request->user()->email,
+                    'file_id' => $newFile->file_id,
                 ]);
 
                 $arrayFiles[] = [
@@ -79,7 +84,7 @@ class FileController extends Controller
 
         return $fileName;
     }
-    
+
 
     public function editFile(Request $request, $file_id) {
         $file = File::where('file_id', $file_id)->first();
@@ -150,5 +155,63 @@ class FileController extends Controller
 
         return response()->file($filePath);
     }
+
+    public function getAllFiles(Request $request) {
+
+        $files = File::all();
+
+        $filesWithAccesses = [];
+
+        foreach ($files as $file) {
+            $accesses = Access::where('file_id', $file->file_id)->get();
+
+            $accessList = [];
+            foreach ($accesses as $access) {
+                $accessList[] = [
+                    'fullname' => $access->full_name,
+                    'email' => $access->email,
+                    'type' => $access->type
+                ];
+            }
+
+            $fileData = [
+                'file_id' => $file->file_id,
+                'name' => $file->name,
+                'code' => 200,
+                'url' => "http://127.0.0.1:8000/api-file/files/{$file->file_id}",
+                'accesses' => $accessList
+            ];
+
+            $filesWithAccesses[] = $fileData;
+        }
+
+        return response()->json($filesWithAccesses, 200);
+    }
+
+
+    public function getUserFiles() {
+        $user = Auth::user();
+        $file = File::all();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Получаем все доступы текущего пользователя
+        $userAccesses = Access::where('user_id', $user->id)->get();
+
+        // Преобразуем каждый доступ в нужный формат
+        $formattedFiles = $userAccesses->map(function ($access, $file) {
+            return [
+                'file_id' => $access->file_id,
+                'code' => 200,
+                'name' => $access->file_name,
+                'url' => url("/files/{$access->file_id}")
+            ];
+        });
+
+        return response()->json($formattedFiles, 200);
+    }
+
 
 }

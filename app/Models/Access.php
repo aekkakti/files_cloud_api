@@ -8,6 +8,10 @@ class Access extends Authenticatable
 {
     protected $fillable = [
         'file_id',
+        'file_name',
+        'full_name',
+        'email',
+        'type',
         'user_id'
     ];
 
